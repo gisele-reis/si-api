@@ -30,6 +30,7 @@ export class UsersService {
   }
 
   findOne(id: string) {
+    console.log('Buscando usuário com ID:', id);
     return this.usersRepository.findOneBy({ id });
   }
 
