@@ -29,15 +29,15 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { username } });
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return this.usersRepository.findOneBy({ id });
   }
 
-  update(id: number, user: Partial<User>) {
+  update(id: string, user: Partial<User>) {
     return this.usersRepository.update(id, user);
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return this.usersRepository.delete(id);
   }
 }

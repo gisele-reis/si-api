@@ -21,7 +21,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
+  findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
@@ -31,12 +31,12 @@ export class UsersController {
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() user: Partial<User>) {
+  update(@Param('id') id: string, @Body() user: Partial<User>) {
     return this.usersService.update(id, user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
+  remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
 }
