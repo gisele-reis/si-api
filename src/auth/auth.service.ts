@@ -11,12 +11,20 @@ export class AuthService {
   ) {}
 
   async validateUser(username: string, password: string): Promise<any> {
+    if (!username || !password) {
+      console.log('Username ou senha não fornecidos');
+      return null;
+    }
+
     const user = await this.usersService.findByUsername(username);
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      console.log('Usuário e senha válidos:', user.username);
       const { password, ...result } = user;
       return result;
     }
+
+    console.log('Username ou senha inválidos');
     return null;
   }
 
