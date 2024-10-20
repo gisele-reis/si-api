@@ -14,11 +14,11 @@ export class User {
   @Column()
   name: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
-  peso: number;
+  @Column()
+  peso: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
-  altura: number;
+  @Column()
+  altura: string;
 
   @Column()
   termos: boolean;

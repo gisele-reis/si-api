@@ -20,15 +20,24 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req) {
+  async getProfile(@Request() req) {
     console.log(req.user);
     const userId = req.user.id;
-    return this.usersService.findOne(userId);
+    return await this.usersService.findByUsername(req.user.username); 
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+  async findOne(@Param('id') id: string) {
+      const user = await this.usersService.findOne(id); 
+      if (user) {
+          console.log('Antes da descriptografia:', user.altura, user.peso);
+
+          user.altura = this.usersService.decryptData(user.altura); 
+          user.peso = this.usersService.decryptData(user.peso); 
+
+          console.log('Depois da descriptografia:', user.altura, user.peso);
+      }
+      return user; 
   }
 
   @Get()
@@ -51,3 +60,4 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 }
+
