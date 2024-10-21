@@ -4,6 +4,7 @@ import {
   Post,
   UseGuards,
   UnauthorizedException,
+  Body,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
@@ -21,5 +22,10 @@ export class AuthController {
       throw new UnauthorizedException('Credenciais inválidas');
     }
     return this.authService.login(user);
+  }
+
+  @Post('refresh-token')
+  async refreshToken(@Body('refreshToken') refreshToken: string) {
+    return this.authService.refreshToken(refreshToken);
   }
 }

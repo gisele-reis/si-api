@@ -13,11 +13,11 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  private secretKey = crypto.randomBytes(32); 
+  private secretKey = crypto.randomBytes(32);
   private algorithm = 'aes-256-cbc';
 
   private encryptData(data: string): string {
-    const iv = crypto.randomBytes(16); 
+    const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(this.algorithm, this.secretKey, iv);
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -26,7 +26,9 @@ export class UsersService {
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const alturaCriptografada = this.encryptData(createUserDto.altura.toString());
+    const alturaCriptografada = this.encryptData(
+      createUserDto.altura.toString(),
+    );
     const pesoCriptografado = this.encryptData(createUserDto.peso.toString());
 
     const newUser = this.usersRepository.create({
@@ -41,9 +43,13 @@ export class UsersService {
 
   public decryptData(encryptedData: string): string {
     const parts = encryptedData.split(':');
-    const iv = Buffer.from(parts.shift()!, 'hex'); // Pegar o IV
-    const encryptedText = parts.join(':'); // O restante é o texto criptografado
-    const decipher = crypto.createDecipheriv(this.algorithm, this.secretKey, iv);
+    const iv = Buffer.from(parts.shift()!, 'hex');
+    const encryptedText = parts.join(':');
+    const decipher = crypto.createDecipheriv(
+      this.algorithm,
+      this.secretKey,
+      iv,
+    );
     let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;
@@ -55,22 +61,31 @@ export class UsersService {
 
   async findByUsername(username: string): Promise<User | undefined> {
     const user = await this.usersRepository.findOne({ where: { username } });
-    
+
     if (user) {
       user.altura = this.decryptData(user.altura);
       user.peso = this.decryptData(user.peso);
     }
-  
+
     return user;
   }
 
   findOne(id: string): Promise<User | null> {
     console.log('Buscando usuário com ID:', id);
-    return this.usersRepository.findOne({ where: { id } }); 
+    return this.usersRepository.findOne({ where: { id } });
   }
 
-  update(id: string, user: Partial<User>) {
-    return this.usersRepository.update(id, user);
+  async update(id: string, user: Partial<User>) {
+    if (user.altura) {
+      user.altura = this.encryptData(user.altura.toString());
+    }
+    if (user.peso) {
+      user.peso = this.encryptData(user.peso.toString());
+    }
+
+    await this.usersRepository.update(id, user);
+
+    return this.findOne(id);
   }
 
   remove(id: string) {

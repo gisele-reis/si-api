@@ -8,11 +8,17 @@ import {
   Put,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './entities/users.entity';
 import { CreateUserDto } from './create-user.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as path from 'path';
+import * as fs from 'fs';
 
 @Controller('users')
 export class UsersController {
@@ -22,22 +28,19 @@ export class UsersController {
   @Get('profile')
   async getProfile(@Request() req) {
     console.log(req.user);
-    const userId = req.user.id;
-    return await this.usersService.findByUsername(req.user.username); 
+    return await this.usersService.findByUsername(req.user.username);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-      const user = await this.usersService.findOne(id); 
-      if (user) {
-          console.log('Antes da descriptografia:', user.altura, user.peso);
-
-          user.altura = this.usersService.decryptData(user.altura); 
-          user.peso = this.usersService.decryptData(user.peso); 
-
-          console.log('Depois da descriptografia:', user.altura, user.peso);
-      }
-      return user; 
+    const user = await this.usersService.findOne(id);
+    if (user) {
+      console.log('Antes da descriptografia:', user.altura, user.peso);
+      user.altura = this.usersService.decryptData(user.altura);
+      user.peso = this.usersService.decryptData(user.peso);
+      console.log('Depois da descriptografia:', user.altura, user.peso);
+    }
+    return user;
   }
 
   @Get()
@@ -59,5 +62,33 @@ export class UsersController {
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
-}
 
+  private readonly uploadPath = path.join(__dirname, '..', 'uploads');
+
+  @Post(':id/upload-photo')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadProfilePhoto(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Arquivo não enviado');
+    }
+
+    if (!fs.existsSync(this.uploadPath)) {
+      console.log('Criando diretório de uploads:', this.uploadPath);
+      fs.mkdirSync(this.uploadPath);
+    } else {
+      console.log('Diretório de uploads já existe:', this.uploadPath);
+    }
+
+    const fileName = `${id}-${Date.now()}${path.extname(file.originalname)}`;
+    const filePath = path.join(this.uploadPath, fileName);
+
+    fs.writeFileSync(filePath, file.buffer);
+    console.log('Arquivo salvo em:', filePath);
+
+    const photoUrl = `http://localhost:3000/uploads/${fileName}`;
+    return this.usersService.update(id, { photoUrl });
+  }
+}

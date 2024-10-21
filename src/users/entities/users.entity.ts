@@ -22,4 +22,7 @@ export class User {
 
   @Column()
   termos: boolean;
+
+  @Column({ nullable: true })
+  photoUrl?: string;
 }
