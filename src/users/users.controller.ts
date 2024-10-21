@@ -75,16 +75,27 @@ export class UsersController {
       throw new BadRequestException('Arquivo não enviado');
     }
 
+    const user = await this.usersService.findOne(id);
+    if (user && user.photoUrl) {
+      const previousImagePath = path.join(
+        __dirname,
+        '..',
+        'uploads',
+        path.basename(user.photoUrl),
+      );
+      if (fs.existsSync(previousImagePath)) {
+        fs.unlinkSync(previousImagePath);
+        console.log('Imagem anterior removida:', previousImagePath);
+      }
+    }
+
     if (!fs.existsSync(this.uploadPath)) {
       console.log('Criando diretório de uploads:', this.uploadPath);
       fs.mkdirSync(this.uploadPath);
-    } else {
-      console.log('Diretório de uploads já existe:', this.uploadPath);
     }
 
     const fileName = `${id}-${Date.now()}${path.extname(file.originalname)}`;
     const filePath = path.join(this.uploadPath, fileName);
-
     fs.writeFileSync(filePath, file.buffer);
     console.log('Arquivo salvo em:', filePath);
 
