@@ -1,11 +1,5 @@
 import { User } from 'src/users/entities/users.entity';
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  ManyToMany,
-  JoinTable,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany } from 'typeorm';
 
 @Entity()
 export class TermsOfUse {
@@ -16,6 +10,5 @@ export class TermsOfUse {
   description: string;
 
   @ManyToMany(() => User, (user) => user.acceptedTerms)
-  @JoinTable()
   users: User[];
 }

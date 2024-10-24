@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber } from "class-validator";
+import { IsArray, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -18,6 +18,6 @@ export class CreateUserDto {
   @IsNumber({ allowInfinity: false, allowNaN: false, maxDecimalPlaces: 2 })
   altura: number;
 
-  @IsNotEmpty()
-  termos: boolean;
+  @IsArray()
+  acceptedTerms: string[];
 }

@@ -7,8 +7,8 @@ import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { TermsOfUseService } from './terms-of-use/terms-of-use.service';
-import { TermsOfUseController } from './terms-of-use/terms-of-use.controller';
+import { TermsOfUseModule } from './terms-of-use/terms-of-use.module';
+import { TermsOfUse } from './terms-of-use/entities/terms-of-use.entity';
 
 @Module({
   imports: [
@@ -25,7 +25,7 @@ import { TermsOfUseController } from './terms-of-use/terms-of-use.controller';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
-        entities: [User],
+        entities: [User, TermsOfUse],
         synchronize: true,
       }),
     }),
@@ -35,8 +35,8 @@ import { TermsOfUseController } from './terms-of-use/terms-of-use.controller';
     }),
     AuthModule,
     UsersModule,
+    TermsOfUseModule,
   ],
-  controllers: [AppController, TermsOfUseController],
-  providers: [TermsOfUseService],
+  controllers: [AppController],
 })
 export class AppModule {}

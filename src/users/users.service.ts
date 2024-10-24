@@ -5,12 +5,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/users.entity';
 import { CreateUserDto } from './create-user.dto';
+import { TermsOfUse } from 'src/terms-of-use/entities/terms-of-use.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(TermsOfUse)
+    private termsRepository: Repository<TermsOfUse>,
   ) {}
 
   private secretKey = crypto.randomBytes(32);
@@ -31,14 +34,22 @@ export class UsersService {
     );
     const pesoCriptografado = this.encryptData(createUserDto.peso.toString());
 
+    const acceptedTerms = await this.getAcceptedTerms(
+      createUserDto.acceptedTerms,
+    );
+
     const newUser = this.usersRepository.create({
       ...createUserDto,
       password: hashedPassword,
       altura: alturaCriptografada,
       peso: pesoCriptografado,
+      acceptedTerms,
     });
 
     return this.usersRepository.save(newUser);
+  }
+  private async getAcceptedTerms(termIds: string[]): Promise<TermsOfUse[]> {
+    return this.termsRepository.findByIds(termIds);
   }
 
   public decryptData(encryptedData: string): string {
@@ -55,8 +66,8 @@ export class UsersService {
     return decrypted;
   }
 
-  findAll() {
-    return this.usersRepository.find();
+  async findAll() {
+    return this.usersRepository.find({ relations: ['acceptedTerms'] });
   }
 
   async findByUsername(username: string): Promise<User | undefined> {
@@ -72,7 +83,10 @@ export class UsersService {
 
   findOne(id: string): Promise<User | null> {
     console.log('Buscando usuário com ID:', id);
-    return this.usersRepository.findOne({ where: { id } });
+    return this.usersRepository.findOne({
+      where: { id },
+      relations: ['acceptedTerms'],
+    });
   }
 
   async update(id: string, user: Partial<User>) {
