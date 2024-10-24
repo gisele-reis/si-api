@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { TermsOfUse } from 'src/terms-of-use/entities/terms-of-use.entity';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany } from 'typeorm';
 
 @Entity()
 export class User {
@@ -25,4 +26,7 @@ export class User {
 
   @Column({ nullable: true })
   photoUrl?: string;
+
+  @ManyToMany(() => TermsOfUse, (termsOfUse) => termsOfUse.users)
+  acceptedTerms: TermsOfUse[];
 }

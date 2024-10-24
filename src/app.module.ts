@@ -7,6 +7,8 @@ import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { TermsOfUseService } from './terms-of-use/terms-of-use.service';
+import { TermsOfUseController } from './terms-of-use/terms-of-use.controller';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { join } from 'path';
     AuthModule,
     UsersModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, TermsOfUseController],
+  providers: [TermsOfUseService],
 })
 export class AppModule {}
