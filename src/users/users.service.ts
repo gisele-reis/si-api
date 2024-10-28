@@ -106,20 +106,19 @@ export class UsersService {
     return this.findOne(id);
   }
 
-  async anonymizeUser(id: string): Promise<User | void>  {
+  async anonymizeUser(id: string): Promise<User | void> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (user) {
       user.username = `anon_${id}`;
-      user.altura = this.encryptData('0'); 
       user.name = `anonName_${id}`;
+      user.altura = this.encryptData('0'); 
       user.peso = this.encryptData('0'); 
-      user.password = await bcrypt.hash(id, 10);
-      user.deletedAt = new Date(); 
+      user.password = await bcrypt.hash(id, 10); 
+      user.deletedAt = new Date();
       user.photoUrl = `anonPhoto_${id}`
-
+      
       return this.usersRepository.save(user);
     }
   }
-  
   
 }
