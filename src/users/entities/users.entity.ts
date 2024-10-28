@@ -5,6 +5,8 @@ import {
   PrimaryGeneratedColumn,
   ManyToMany,
   JoinTable,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
@@ -33,4 +35,14 @@ export class User {
   @ManyToMany(() => TermsOfUse, (termsOfUse) => termsOfUse.users)
   @JoinTable()
   acceptedTerms: TermsOfUse[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date | null; 
+
 }

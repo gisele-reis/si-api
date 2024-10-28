@@ -2,7 +2,7 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { User } from './entities/users.entity';
 import { CreateUserDto } from './create-user.dto';
 import { TermsOfUse } from 'src/terms-of-use/entities/terms-of-use.entity';
@@ -67,8 +67,12 @@ export class UsersService {
   }
 
   async findAll() {
-    return this.usersRepository.find({ relations: ['acceptedTerms'] });
+    return this.usersRepository.find({
+      where: { deletedAt: null },
+      relations: ['acceptedTerms']
+    });
   }
+  
 
   async findByUsername(username: string): Promise<User | undefined> {
     const user = await this.usersRepository.findOne({ where: { username } });
@@ -102,7 +106,20 @@ export class UsersService {
     return this.findOne(id);
   }
 
-  remove(id: string) {
-    return this.usersRepository.delete(id);
+  async anonymizeUser(id: string): Promise<User | void>  {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (user) {
+      user.username = `anon_${id}`;
+      user.altura = this.encryptData('0'); 
+      user.name = `anonName_${id}`;
+      user.peso = this.encryptData('0'); 
+      user.password = await bcrypt.hash(id, 10);
+      user.deletedAt = new Date(); 
+      user.photoUrl = `anonPhoto_${id}`
+
+      return this.usersRepository.save(user);
+    }
   }
+  
+  
 }
