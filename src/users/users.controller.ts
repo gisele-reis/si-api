@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './entities/users.entity';
@@ -26,10 +27,24 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  async getProfile(@Request() req) {
-    console.log(req.user);
-    return await this.usersService.findByUsername(req.user.username);
+  async getProfile(@Request() req): Promise<User> {
+    const username = req.user.username; 
+    const user = await this.usersService.findByUsername(username);
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    return user;
   }
+  
+  @UseGuards(JwtAuthGuard)
+@Get(':id/pending-terms')
+async getPendingTerms(@Param('id') id: string) {
+  const pendingTerms = await this.usersService.getPendingTerms(id);
+  if (pendingTerms.length === 0) {
+    return { message: 'Não há termos pendentes para este usuário.' };
+  }
+  return pendingTerms;
+}
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
@@ -60,7 +75,12 @@ export class UsersController {
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    return this.usersService.anonymizeUser(id);
+    try {
+      await this.usersService.remove(id);
+      return { message: 'Usuário excluído com sucesso.' }; 
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Erro ao excluir o usuário.');
+    }
   }
   
 

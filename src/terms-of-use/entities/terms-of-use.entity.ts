@@ -9,6 +9,12 @@ export class TermsOfUse {
   @Column()
   description: string;
 
+  @Column()
+  details: string;
+
+  @Column({ default: false })  
+  isMandatory: boolean;
+
   @ManyToMany(() => User, (user) => user.acceptedTerms)
   users: User[];
 }

@@ -31,6 +31,10 @@ export class User {
 
   @Column({ nullable: true })
   photoUrl?: string;
+  
+  @ManyToMany(() => TermsOfUse, { eager: true }) 
+  @JoinTable()
+  pendingTerms: TermsOfUse[]; 
 
   @ManyToMany(() => TermsOfUse, (termsOfUse) => termsOfUse.users)
   @JoinTable()
@@ -41,8 +45,4 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @Column({ type: 'timestamp', nullable: true })
-  deletedAt: Date | null; 
-
 }
