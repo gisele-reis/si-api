@@ -28,23 +28,39 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req): Promise<User> {
-    const username = req.user.username; 
+    const username = req.user.username;
     const user = await this.usersService.findByUsername(username);
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
     return user;
   }
-  
+
   @UseGuards(JwtAuthGuard)
-@Get(':id/pending-terms')
-async getPendingTerms(@Param('id') id: string) {
-  const pendingTerms = await this.usersService.getPendingTerms(id);
-  if (pendingTerms.length === 0) {
-    return { message: 'Não há termos pendentes para este usuário.' };
+  @Get(':id/pending-terms')
+  async getPendingTerms(@Param('id') id: string) {
+    const pendingTerms = await this.usersService.getPendingTerms(id);
+    if (pendingTerms.length === 0) {
+      return { message: 'Não há termos pendentes para este usuário.' };
+    }
+    return pendingTerms;
   }
-  return pendingTerms;
-}
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':userId/pending-terms/:termId')
+  async removePendingTerm(
+    @Param('userId') userId: string,
+    @Param('termId') termId: string,
+  ) {
+    try {
+      await this.usersService.removePendingTerm(userId, termId);
+      return { message: 'Termo pendente removido com sucesso.' };
+    } catch (error) {
+      throw new BadRequestException(
+        error.message || 'Erro ao remover o termo pendente.',
+      );
+    }
+  }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
@@ -77,12 +93,13 @@ async getPendingTerms(@Param('id') id: string) {
   async remove(@Param('id') id: string) {
     try {
       await this.usersService.remove(id);
-      return { message: 'Usuário excluído com sucesso.' }; 
+      return { message: 'Usuário excluído com sucesso.' };
     } catch (error) {
-      throw new BadRequestException(error.message || 'Erro ao excluir o usuário.');
+      throw new BadRequestException(
+        error.message || 'Erro ao excluir o usuário.',
+      );
     }
   }
-  
 
   private readonly uploadPath = path.join(__dirname, '..', 'uploads');
 
