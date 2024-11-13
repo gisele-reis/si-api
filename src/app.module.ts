@@ -9,6 +9,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { TermsOfUseModule } from './terms-of-use/terms-of-use.module';
 import { TermsOfUse } from './terms-of-use/entities/terms-of-use.entity';
+import { ConsentItem } from './terms-of-use/entities/consent-item.entity';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { TermsOfUse } from './terms-of-use/entities/terms-of-use.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
-        entities: [User, TermsOfUse],
+        entities: [User, TermsOfUse, ConsentItem],
         synchronize: true,
       }),
     }),

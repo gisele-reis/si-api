@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { User } from './entities/users.entity';
@@ -16,7 +16,7 @@ import {
 import { Readable } from 'stream';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit{
   private s3Client = new S3Client({ region: process.env.AWS_REGION });
   private bucketName = 'shorts-bucket';
   private exclusionListFileKey = 'exclusionList.json';
@@ -31,6 +31,40 @@ export class UsersService {
   private secretKey = crypto.randomBytes(32);
   private algorithm = 'aes-256-cbc';
 
+  async onModuleInit() {
+    await this.syncExclusions();
+  }
+  private async syncExclusions() {
+    try {
+      const data = await this.s3Client.send(new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: this.exclusionListFileKey,
+      }));
+
+      const exclusionList: string[] = JSON.parse(await this.streamToString(data.Body));
+
+      for (const userId of exclusionList) {
+        const user = await this.usersRepository.findOne({ where: { id: userId } });
+        if (user) {
+          await this.usersRepository.remove(user);
+          console.log(`Usuário ${userId} excluído do banco de dados.`);
+        }
+      }
+
+      console.log('Sincronização de exclusões completada com sucesso.');
+    } catch (error) {
+      console.error('Erro ao sincronizar exclusões:', error);
+    }
+  }
+
+  private async streamToString(stream): Promise<string> {
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString('utf-8');
+  }
+  
   private encryptData(data: string): string {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(this.algorithm, this.secretKey, iv);

@@ -7,20 +7,42 @@ export class TermsOfUseController {
   constructor(private readonly termsService: TermsOfUseService) {}
 
   @Post('create')
-  createTerm(@Body('description') description: string, @Body('isMandatory') isMandatory: boolean, @Body('details') details: string) {
-    return this.termsService.createTerm(description, isMandatory, details);
+  createTerm(
+    @Body('description') description: string,
+    @Body('isMandatory') isMandatory: boolean,
+    @Body('details') details: string,
+    @Body('items') items: { name: string; description: string }[],
+  ) {
+    return this.termsService.createTerm(description, isMandatory, details, items);
   }
-
-  @Put(':id')
-  updateTerm(@Param('id') id: string, @Body() body: { description: string; isMandatory: boolean, details:string }) {
-    return this.termsService.updateTerm(id, body.description, body.isMandatory, body.details);
-  }
-
-  
 
   @Get()
   getTerms() {
     return this.termsService.getTerms();
+  }
+
+  @Get(':termId/items')
+  async getConsentItems(
+    @Param('termId') termId: string,  
+  ) {
+    try {
+      const consentItems = await this.termsService.getConsentItemsByTerm(termId);
+      return consentItems;
+    } catch (error) {
+      return {
+        statusCode: 404,
+        message: error.message,
+      };
+    }
+  }
+
+  @Post(':termId/items')
+  createConsentItem(
+    @Param('termId') termId: string,
+    @Body('title') title: string,
+    @Body('description') description: string,
+  ) {
+    return this.termsService.createConsentItem(termId, title, description);
   }
 
   @Post('accept')
