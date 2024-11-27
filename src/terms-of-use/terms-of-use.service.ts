@@ -17,75 +17,38 @@ export class TermsOfUseService {
     private consentItemRepository: Repository<ConsentItem>,
   ) {}
 
-  async createTerm(
-    description: string,
-    isMandatory: boolean,
-    details: string,
-    items: { name: string; description: string }[],
-  ): Promise<TermsOfUse> {
-    const newTerm = this.termsRepository.create({
-      description,
-      details,
-      isMandatory,
-      items: items.map(item => this.termsRepository.manager.create(ConsentItem, item)),
-    });
-    const savedTerm = await this.termsRepository.save(newTerm);
-    const users = await this.usersRepository.find({
-      relations: ['acceptedTerms', 'pendingTerms'],
-    });
-    for (const user of users) {
-      if (!user.acceptedTerms.some((term) => term.id === savedTerm.id)) {
-        if (!user.pendingTerms || !user.pendingTerms.some((term) => term.id === savedTerm.id)) {
-          user.pendingTerms = [...(user.pendingTerms || []), savedTerm];
-          await this.usersRepository.save(user);
-        }
-      }
-    }
-    
-    return savedTerm;
-  }
-
-  async createConsentItem(
-    termId: string,
-    title: string,
-    description: string,
-  ): Promise<ConsentItem> {
-    const term = await this.termsRepository.findOne({ where: { id: termId } });
-    if (!term) throw new Error('Termo não encontrado');
-
-    const consentItem = this.consentItemRepository.create({
+  async createTerm(title: string, description: string, items: { title: string; description: string; isMandatory: boolean }[]) {
+    const term = this.termsRepository.create({
       title,
       description,
-      term,
+      items: items.map((item) =>
+        this.consentItemRepository.create({ title: item.title, description: item.description, isMandatory: item.isMandatory }),
+      ),
     });
-    return this.consentItemRepository.save(consentItem);
+  
+    return this.termsRepository.save(term);
   }
-
-  async updateTerm(
-    id: string,
-    description: string,
-    isMandatory: boolean,
-    details: string,
-  ): Promise<TermsOfUse> {
-    const updatedTerm = await this.termsRepository.findOne({ where: { id } });
-    if (!updatedTerm) throw new Error('Termo não encontrado');
-    await this.termsRepository.update(id, {
-      description,
-      isMandatory,
-      details,
-    });
-    const users = await this.usersRepository.find({
-      relations: ['pendingTerms'],
-    });
-    for (const user of users) {
-      if (!user.pendingTerms.some((term) => term.id === updatedTerm.id)) {
-        user.pendingTerms = [...(user.pendingTerms || []), updatedTerm];
-        await this.usersRepository.save(user);
-      }
-    }
-
-    return this.termsRepository.findOne({ where: { id } });
+  
+  async createConsentItem(termId: string, description: string, isMandatory: boolean) {
+    const term = await this.termsRepository.findOne({ where: { id: termId } });
+    if (!term) throw new Error('Termo não encontrado');
+  
+    const item = this.consentItemRepository.create({ description, isMandatory, term });
+    return this.consentItemRepository.save(item);
   }
+  
+  async acceptItems(userId: string, itemIds: string[]) {
+    const user = await this.usersRepository.findOne({ where: { id: userId }, relations: ['acceptedItems', 'acceptedTerms'] });
+    if (!user) throw new Error('Usuário não encontrado');
+  
+    const items = await this.consentItemRepository.find({ where: { id: In(itemIds) }, relations: ['term'] });
+  
+    const termsToAccept = new Set(items.map((item) => item.term.id));
+    user.acceptedItems.push(...items);
+    user.acceptedTerms = await this.termsRepository.findByIds([...termsToAccept]);
+  
+    return this.usersRepository.save(user);
+  }  
 
   async getTerms(): Promise<TermsOfUse[]> {
     return this.termsRepository.find();

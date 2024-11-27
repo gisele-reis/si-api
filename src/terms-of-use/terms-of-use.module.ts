@@ -10,6 +10,6 @@ import { ConsentItem } from './entities/consent-item.entity';
   imports: [TypeOrmModule.forFeature([User, TermsOfUse, ConsentItem])],
   providers: [TermsOfUseService],
   controllers: [TermsOfUseController],
-  exports: [TermsOfUseService],
+  exports: [TermsOfUseService, TypeOrmModule],
 })
 export class TermsOfUseModule {}

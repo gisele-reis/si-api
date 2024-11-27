@@ -7,14 +7,9 @@ export class TermsOfUseController {
   constructor(private readonly termsService: TermsOfUseService) {}
 
   @Post('create')
-  createTerm(
-    @Body('description') description: string,
-    @Body('isMandatory') isMandatory: boolean,
-    @Body('details') details: string,
-    @Body('items') items: { name: string; description: string }[],
-  ) {
-    return this.termsService.createTerm(description, isMandatory, details, items);
-  }
+createTerm(@Body() body: { title: string; description: string; items: { title: string; description: string; isMandatory: boolean }[] }) {
+  return this.termsService.createTerm(body.title, body.description, body.items);
+}
 
   @Get()
   getTerms() {
@@ -37,22 +32,22 @@ export class TermsOfUseController {
   }
 
   @Post(':termId/items')
-  createConsentItem(
-    @Param('termId') termId: string,
-    @Body('title') title: string,
-    @Body('description') description: string,
-  ) {
-    return this.termsService.createConsentItem(termId, title, description);
-  }
+createItem(@Param('termId') termId: string, @Body() body: { description: string; isMandatory: boolean }) {
+  return this.termsService.createConsentItem(termId, body.description, body.isMandatory);
+}
 
-  @Post('accept')
-  async acceptTerms(
-    @Body('userId') userId: string,
-    @Body('termIds') termIds: string[],
-    @Res() res: Response,
-  ) {
-    const result = await this.termsService.acceptTerms(userId, termIds);
+@Post('accept')
+acceptItems(@Body() body: { userId: string; itemIds: string[] }) {
+  return this.termsService.acceptItems(body.userId, body.itemIds);
+}
 
-    return res.status(result.statusCode).json(result);
-  }
+@Get()
+listTerms() {
+  return this.termsService.getTerms();
+}
+
+@Get(':termId/items')
+listItems(@Param('termId') termId: string) {
+  return this.termsService.getConsentItemsByTerm(termId);
+}
 }

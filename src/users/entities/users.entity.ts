@@ -1,3 +1,4 @@
+import { ConsentItem } from 'src/terms-of-use/entities/consent-item.entity';
 import { TermsOfUse } from 'src/terms-of-use/entities/terms-of-use.entity';
 import {
   Entity,
@@ -36,9 +37,14 @@ export class User {
   @JoinTable()
   pendingTerms: TermsOfUse[]; 
 
-  @ManyToMany(() => TermsOfUse, (termsOfUse) => termsOfUse.users)
+  
+  @ManyToMany(() => TermsOfUse, (term) => term.acceptedUsers)
   @JoinTable()
   acceptedTerms: TermsOfUse[];
+
+  @ManyToMany(() => ConsentItem)
+  @JoinTable()
+  acceptedItems: ConsentItem[];
 
   @CreateDateColumn()
   createdAt: Date;

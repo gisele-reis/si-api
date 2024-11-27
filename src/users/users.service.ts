@@ -14,6 +14,7 @@ import {
   GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
+import { ConsentItem } from 'src/terms-of-use/entities/consent-item.entity';
 
 @Injectable()
 export class UsersService implements OnModuleInit{
@@ -26,6 +27,8 @@ export class UsersService implements OnModuleInit{
     private usersRepository: Repository<User>,
     @InjectRepository(TermsOfUse)
     private termsRepository: Repository<TermsOfUse>,
+    @InjectRepository(ConsentItem)
+    private consentItemRepository: Repository<ConsentItem>,
   ) {}
 
   private secretKey = crypto.randomBytes(32);
@@ -75,27 +78,24 @@ export class UsersService implements OnModuleInit{
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const alturaCriptografada = this.encryptData(
-      createUserDto.altura.toString(),
-    );
+    const alturaCriptografada = this.encryptData(createUserDto.altura.toString());
     const pesoCriptografado = this.encryptData(createUserDto.peso.toString());
-    const acceptedTerms = await this.getAcceptedTerms(
-      createUserDto.acceptedTerms,
-    );
 
+    const acceptedItems = await this.getAcceptedItems(createUserDto.acceptedItems);
+  
     const newUser = this.usersRepository.create({
       ...createUserDto,
       password: hashedPassword,
       altura: alturaCriptografada,
       peso: pesoCriptografado,
-      acceptedTerms,
+      acceptedItems,  
     });
-
+  
     return this.usersRepository.save(newUser);
   }
 
-  private async getAcceptedTerms(termIds: string[]): Promise<TermsOfUse[]> {
-    return this.termsRepository.findByIds(termIds);
+  private async getAcceptedItems(itemIds: string[]): Promise<ConsentItem[]> {
+    return this.consentItemRepository.findByIds(itemIds); 
   }
 
   public decryptData(encryptedData: string): string {
@@ -127,7 +127,7 @@ export class UsersService implements OnModuleInit{
 
   async getPendingTerms(
     userId: string,
-  ): Promise<{ description: string; details: string }[]> {
+  ): Promise<{ description: string; title: string }[]> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
       relations: ['pendingTerms'],
@@ -142,8 +142,7 @@ export class UsersService implements OnModuleInit{
     return user.pendingTerms.map((term) => ({
       id: term.id,
       description: term.description,
-      details: term.details,
-      isMandatory: term.isMandatory,
+      title: term.title,
     }));
   }
 

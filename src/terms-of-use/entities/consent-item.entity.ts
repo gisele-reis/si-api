@@ -12,6 +12,9 @@ export class ConsentItem {
   @Column()
   description: string;
 
+  @Column({ default: false }) 
+  isMandatory: boolean;
+
   @ManyToOne(() => TermsOfUse, (termsOfUse) => termsOfUse.items)
   term: TermsOfUse;
 }

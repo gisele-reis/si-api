@@ -17,7 +17,8 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsNumber({ allowInfinity: false, allowNaN: false, maxDecimalPlaces: 2 })
   altura: number;
-
+  
   @IsArray()
-  acceptedTerms: string[];
+  acceptedItems: string[];
+  
 }
