@@ -91,4 +91,31 @@ export class TermsOfUseService {
     }
     return term.items;
   }
+
+  async getAcceptedItemsByUser(userId: string): Promise<ConsentItem[]> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['acceptedItems'], 
+    });
+  
+    if (!user) throw new Error('Usuário não encontrado');
+  
+    return user.acceptedItems; 
+  }
+
+  async removeAcceptedItem(userId: string, itemId: string): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['acceptedItems'],
+    });
+  
+    if (!user) throw new Error('Usuário não encontrado');
+  
+    user.acceptedItems = user.acceptedItems.filter(item => item.id !== itemId);
+  
+    await this.usersRepository.save(user);
+  }
+  
+  
 }
+
