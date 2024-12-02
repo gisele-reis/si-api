@@ -38,17 +38,26 @@ export class TermsOfUseService {
   }
   
   async acceptItems(userId: string, itemIds: string[]) {
-    const user = await this.usersRepository.findOne({ where: { id: userId }, relations: ['acceptedItems', 'acceptedTerms'] });
-    if (!user) throw new Error('Usuário não encontrado');
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['acceptedItems', 'acceptedTerms'],
+    });
   
-    const items = await this.consentItemRepository.find({ where: { id: In(itemIds) }, relations: ['term'] });
+    if (!user) throw new Error('Usuário não encontrado');
+    const items = await this.consentItemRepository.find({
+      where: { id: In(itemIds) },
+      relations: ['term'], 
+    });
   
     const termsToAccept = new Set(items.map((item) => item.term.id));
-    user.acceptedItems.push(...items);
-    user.acceptedTerms = await this.termsRepository.findByIds([...termsToAccept]);
+    user.acceptedItems.push(...items);  
+    user.acceptedTerms = await this.termsRepository.findByIds([...termsToAccept]); 
   
-    return this.usersRepository.save(user);
-  }  
+    await this.usersRepository.save(user);  
+  
+    return user;
+  }
+  
 
   async getTerms(): Promise<TermsOfUse[]> {
     return this.termsRepository.find();
