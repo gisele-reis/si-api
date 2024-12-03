@@ -13,6 +13,9 @@ export class TermsOfUse {
   @Column()
   description: string;
 
+  @Column({ default: 1 })
+  version: number;
+
   @OneToMany(() => ConsentItem, (item) => item.term, { cascade: true })
   items: ConsentItem[];
 

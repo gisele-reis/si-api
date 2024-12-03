@@ -36,15 +36,16 @@ export class UsersController {
     return user;
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get(':id/pending-terms')
-  async getPendingTerms(@Param('id') id: string) {
-    const pendingTerms = await this.usersService.getPendingTerms(id);
-    if (pendingTerms.length === 0) {
-      return { message: 'Não há termos pendentes para este usuário.' };
-    }
-    return pendingTerms;
+  @Get(':userId/pending-terms')
+  async getPendingTerms(@Param('userId') userId: string) {
+    const user = await this.usersService.findOneWithPendingTerms(userId);
+    
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+    
+    return user.pendingTerms;
   }
+  
+  
 
   @UseGuards(JwtAuthGuard)
   @Delete(':userId/pending-terms/:termId')
@@ -83,6 +84,7 @@ export class UsersController {
   async create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createUser(createUserDto);
   }
+
 
   @Put(':id')
   update(@Param('id') id: string, @Body() user: Partial<User>) {

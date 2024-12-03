@@ -1,6 +1,7 @@
 import { Response } from 'express';
-import { Body, Controller, Delete, Get, Param, Post, Put, Res } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Res } from '@nestjs/common';
 import { TermsOfUseService } from './terms-of-use.service';
+import { TermsOfUse } from './entities/terms-of-use.entity';
 
 @Controller('terms')
 export class TermsOfUseController {
@@ -46,6 +47,7 @@ async getAcceptedItems(@Param('userId') userId: string) {
   return this.termsService.getAcceptedItemsByUser(userId);
 }
 
+
 @Delete('users/:userId/accepted-items/:itemId')
 async removeAcceptedItem(
   @Param('userId') userId: string,
@@ -55,7 +57,25 @@ async removeAcceptedItem(
   return { message: 'Item removido com sucesso' };
 }
 
-
+@Put(':termId')
+async updateTerm(
+  @Param('termId') termId: string,
+  @Body()
+  updates: {
+    title?: string;
+    description?: string;
+    newItems?: { title: string; description: string; isMandatory: boolean }[];
+  },
+): Promise<TermsOfUse> {
+  try {
+    return await this.termsService.updateTerm(termId, updates);
+  } catch (error) {
+    if (error.message === 'Termo não encontrado') {
+      throw new NotFoundException(error.message);
+    }
+    throw new BadRequestException(error.message || 'Erro ao atualizar o termo');
+  }
+}
 
 @Get()
 listTerms() {

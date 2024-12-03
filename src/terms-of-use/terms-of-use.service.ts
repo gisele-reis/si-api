@@ -63,6 +63,65 @@ export class TermsOfUseService {
     return this.termsRepository.find();
   }
 
+  async updateTerm(
+    termId: string,
+    updates: {
+      title?: string;
+      description?: string;
+      newItems?: { title: string; description: string; isMandatory: boolean }[];
+    }
+  ): Promise<TermsOfUse> {
+    const term = await this.termsRepository.findOne({
+      where: { id: termId },
+      relations: ['items'],
+    });
+  
+    if (!term) throw new Error('Termo não encontrado');
+  
+    if (updates.title) term.title = updates.title;
+    if (updates.description) term.description = updates.description;
+  
+    if (updates.newItems && updates.newItems.length > 0) {
+      const newConsentItems = updates.newItems.map((item) =>
+        this.consentItemRepository.create({
+          title: item.title,
+          description: item.description,
+          isMandatory: item.isMandatory,
+          term,
+        })
+      );
+      term.items.push(...newConsentItems);
+    }
+
+    term.version += 1;
+  
+    const updatedTerm = await this.termsRepository.save(term);
+  
+    await this.notifyUsersAboutTermUpdate(termId);
+  
+    return updatedTerm;
+  }
+  
+
+  private async notifyUsersAboutTermUpdate(termId: string): Promise<void> {
+    const term = await this.termsRepository.findOne({
+      where: { id: termId },
+      relations: ['acceptedUsers'], 
+    });
+  
+    if (!term) throw new Error('Termo não encontrado');
+  
+    const usersToUpdate = term.acceptedUsers;
+  
+    for (const user of usersToUpdate) {
+      if (!user.pendingTerms.some((t) => t.id === termId)) {
+        user.pendingTerms.push(term);
+        await this.usersRepository.save(user); 
+      }
+    }
+  }
+  
+
   async acceptTerms(userId: string, itemIds: string[]): Promise<any> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },

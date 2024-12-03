@@ -94,6 +94,14 @@ export class UsersService implements OnModuleInit{
     return this.usersRepository.save(newUser);
   }
 
+  async findOneWithPendingTerms(userId: string): Promise<User> {
+    return this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['pendingTerms'],
+    });
+  }
+  
+
   private async getAcceptedItems(itemIds: string[]): Promise<ConsentItem[]> {
     return this.consentItemRepository.findByIds(itemIds); 
   }
